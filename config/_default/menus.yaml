@@ -15,9 +15,17 @@ main:
     url: '/course/example/'
     weight: 10
     parent: courses
+  - name: Tutorials
+    url: '/tutorial'
+    weight: 30
+    identifier: tutorials
+  - name: Analyzing Launch Monitor Data in R
+    url: '/tutorial/launch_monitor/'
+    weight: 10
+    parent: tutorials
   - name: Blog
     url: '/post'
-    weight: 30
+    weight: 40
   - name: Contact
     url: '/contact'
-    weight: 60
+    weight: 50

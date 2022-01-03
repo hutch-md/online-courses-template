@@ -1,4 +1,5 @@
 ---
+active: false
 widget: hero
 headless: true
 weight: 10
@@ -7,8 +8,8 @@ hero_media: student.svg
 design:
   background:
     gradient_angle: 0
-    gradient_start: 'rgb(224,223,255)'
-    gradient_end: 'rgb(153,238,255)'
+    gradient_start: 'rgb(0,212,255)'
+    gradient_end: 'rgb(9,9,121)'
     text_color_light: false
 cta:
   url: course/

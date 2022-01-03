@@ -5,10 +5,12 @@
 
 # Appearance
 
-theme: custom
-day_night: false
-font: ''
-font_size: L
+# Favirote themes are
+# earth, minimal, ocean
+theme: ocean
+day_night: true
+font: 'Minimal'
+font_size: M
 
 # SEO
 
@@ -20,8 +22,7 @@ twitter: ''
 
 # Contact (edit or remove options as required)
 
-email: test@example.org
-appointment_url: 'https://calendly.com'
+email: michaeldavidhutchinson@gmail.com
 contact_links:
   - icon: comments
     icon_pack: fas

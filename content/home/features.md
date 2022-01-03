@@ -1,4 +1,5 @@
 ---
+active: false
 widget: featurette
 headless: true
 weight: 20
