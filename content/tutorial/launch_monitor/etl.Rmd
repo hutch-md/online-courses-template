@@ -145,7 +145,6 @@ Let's start by loading the packages that are going to help with the manipulation
 <br>
 You can install them by copy/pasting the following code into your R script (top-left pane), and running in the terminal (low-left pane) by clicking "Run" `(Mac: Cmd + Return, Windows: Ctrl + Enter)`.
 
-
 ```{r}
 # Let's do this in two steps.
 # First, create a vector of the packages we'll need for this tutorial
@@ -228,7 +227,7 @@ report_details <- read_csv(file = file_name, col_names = FALSE, trim_ws = TRUE, 
 
 ```
 
-Extract some metadata about the session that we'll use latter
+Extract some metadata about the session that we'll use later
 ```{r message = FALSE}
 # Some regex to extract the username and get datetime values
 # We'll add these as columns back into our dataset later
@@ -236,9 +235,135 @@ username <- str_extract(report_details$X1, "(?<=: ).*(?= -)")
 datetime <- as.POSIXct(str_extract(report_details$X1, "(?<= - ).*"), format = '%m/%e/%Y %I:%M %p', tz=Sys.timezone())
 ```
 
+Now, let's read in the variable names from our report.
+
+```{r message = FALSE}
+# # In the Foresight reports I've seen, the names of the variables come in the second row.
+# # We pull those in here by skipping the first row of our data
+variables <- read_csv(file_name, skip = 1, col_names = FALSE, trim_ws = TRUE, n_max = 1)
+
+```
+Next, let's pull in the full tablee and use our `variables` object to name the columns. 
+
+```{r message = FALSE}
+
+# We then pull in the actual data
+raw_data <- read_csv(file_name, skip = 4, col_names = FALSE, trim_ws = TRUE)
+
+# Change the column names of the raw data to our variable names
+colnames(raw_data) <- variables
+
+```
+
+Let's take a look at our dataset using the `glimpse()` function
 
 
+```{r message = FALSE}
+# Take a look at our data
+glimpse(raw_data)
 
+```
+
+Here we get our first peak our data in its table format (technically it's a tibble, but we won't get into that here).
+
+If you are using the sample data or followed the steps to export your own data, you should have a table with 25 variables that is roughly as many observations (rows) as balls hit during your session. I say "roughly" as many because if we look a little bit closer, there are some issues that may stand out.
+
+```{r}
+tail(raw_data)
+
+```
+
+If you look closely you'll there are a couple summary rows that give the average and standard deviations for each club hit during your session. That's helpful if we're just wanting to examine a .csv, but we're going to go a bit deeper than that here, and if we want to look at summaries, we'll create them on our own.
+
+
+<style>
+div.blue { background-color:##FF9800; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+
+### A Note on Data Prep
+
+In addition to removing the `Average` and `Std. Dev.` summary rows, there are a few other things we need to do to get this dataset into shape. We could take those tasks one at a time as we encounter them, but that can be inefficient, if for no other reason than you end up with a bunch of intermediate tables called `temp_data_1`, `temp_data_2`, and so on.
+
+Instead, we can use the *%>%* (called a pipe operator), that allows us to take the output from one step and perform additional manipulation in the next. You can think of it as the "and then" operator because it's telling R, "take the output from the last step, **and then** do X". I'll show what I mean.
+
+</div><br>
+
+In this next chunk of code, I'm going to create a new table called `clean_data`. The first thing I'm going to feed into `clean_data` will be our `raw_data` table. I'm then going to perform three separate transformations before returning our new `clean_data` table.
+
+```{r warning = FALSE}
+# Create new table called clean_data. 
+# Start with raw_data table
+# and then change the casing of the column names
+# and remove any rows that are blank or have 'Average' or 'Std. Dev.' 
+clean_data <- raw_data %>%
+  clean_names(case = "snake") %>% 
+  # Basically reads "don't keep any rows where the value for the club variable is one of these
+  filter(! club %in% c('Average', 'Std. Dev.', NA)) %>% 
+  # Coerce all our variables, except for "club" and "ball" to numerics.
+  # This ensures that for any values where we didn't get a reading, 
+  # we get a NA value rather than the '--' that comes standard in the Foresight report
+  mutate_at(vars(-club, -ball), as.numeric)
+
+```
+
+There's one more step we should probably take now before we begin our analysis. Let's look at the values for a variable like 'offline'. Note, putting a `$` after the name of your table allows you to access a specific variable
+
+```{r}
+# This will return the values from the 'offline' column of the 'clean_data' table
+clean_data$offline
+
+```
+
+If you have any kind of a normal shot pattern, some of these values will be negative and some will be positive. The negative values are shots that were missed to the left, the positive values are shots that were missed to the right. When we begin exploring our data, it would be nice to be able to do things like a simple count of the number of shots that were missed left, without having to do additional manipulation.
+
+We have a similar issue with the variables for `side_angle`, `sidespin`, `tilt_angle`, `angle_of_attack`, and `club_path`. If you have a GCQuad, you may have to do similar transforms for `face_to_path`, `lie`, `closure_rate`, `face_impact_lateral` and `face_impact_vertical`. If you have an example dataset with those variables, shoot it my way and I'll add some code to the repo.
+
+Anyway, let's make use of the `mutate()` function to create new variables for these directional categories. If you'd like to know more about the `case_when()` function, check out [**this tutorial**](https://www.sharpsightlabs.com/blog/case-when-r/).
+
+Additionally, we're going to add back in our values for `username` and `datetime` so that if we build a larger dataset of multiple sessions, or multiple people, we'll have an easy way to compare. 
+
+<style>
+div.blue { background-color:###FF9800; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+### A Note to Lefties 
+I haven't verified that these transformations are all correct for left-handed golfers, so if you see something I missed or have left-handed Foresight data you want to share, let me know.
+
+</div><br>
+
+
+```{r}
+transformed_data <- clean_data %>% 
+  mutate(side_angle_dir = case_when(side_angle > 0 ~ 'Right', side_angle < 0 ~ 'Left', 
+                                    side_angle == 0 ~ 'Center', TRUE ~ 'No Reading'),
+         sidespin_dir = case_when(sidespin > 0 ~ 'Right', sidespin < 0 ~ 'Left', 
+                                  sidespin == 0 ~ 'No Sidespin', TRUE ~ 'No Reading'),
+         tilt_angle_dir = case_when(tilt_angle > 0 ~ 'Right', tilt_angle < 0 ~ 'Left',
+                                    tilt_angle == 0 ~ 'No Tilt Angle', TRUE ~ 'No Reading'),
+         offline_dir = case_when(offline > 0 ~ 'Right', offline < 0 ~ 'Left',
+                                 offline == 0 ~ 'Center', TRUE ~ 'No Reading'),
+         angle_of_attack_dir = case_when(angle_of_attack > 0 ~ 'Up', angle_of_attack < 0 ~ 'Down',
+                                         angle_of_attack == 0 ~ 'Neutral AoA', TRUE ~ 'No Reading'),
+         club_path_dir = case_when(club_path > 0 ~ 'In-to-Out', club_path < 0 ~ 'Out-to-In',
+                                   club_path == 0 ~ 'Neutral Path', TRUE ~ 'No Reading'),
+         face_to_path_dir = case_when(as.numeric(face_to_path) > 0 ~ 'In-to-Out', as.numeric(face_to_path)  < 0 ~ 'Out-to-In',
+                                   as.numeric(face_to_path)  == 0 ~ 'Neutral Path', FALSE ~ 'No Reading'),
+         date_time = datetime,
+         username = username
+         )
+```
+
+Okay! We now have a clean dataset that's ready for analysis. Let's take a look!
+
+```{r message = FALSE}
+
+head(transformed_data)
+
+datatable(transformed_data, rownames = FALSE, filter = "top", options = list(pageLength = 5))
+```
 
 
 
