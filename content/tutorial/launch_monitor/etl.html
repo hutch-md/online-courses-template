@@ -131,10 +131,12 @@ div.blue { background-color:#FF9800; border-radius: 5px; padding: 20px;}
 <div id="a-note-to-beginners" class="section level3 blue">
 <h3>A Note to Beginners</h3>
 <p>If you’ve never written any code before, that’s totally fine! A lot of the following will be foreign to you, but you <em>should</em> be able to just copy/paste these code chunks into your R-script (the top left pane of your R-Studio screen) and run it line by line to produce the same results. If you get errors, try unblocking yourself by Googling the errors or looking for solutions on a site like <a href="https://stackoverflow.com/">Stack Overflow</a>.</p>
-<p>I also highly recommend taking an <a href="https://www.datacamp.com/courses/free-introduction-to-r">Intro to R</a> course like this one offered by Data Camp.</p>
+<p>I also highly recommend taking an “Intro to R” course like <a href="https://www.datacamp.com/courses/free-introduction-to-r">this one offered by Data Camp</a>.</p>
 </div>
 <p><br>
-Let’s start by loading the packages that are going to help with the manipulation and visualization of our data. You can think of packages like libraries of specialized functions that help us do things we can’t do with R as it comes out of the box. You can install them by running the following code.</p>
+Let’s start by loading the packages that are going to help with the manipulation and visualization of our data. You can think of packages like libraries of specialized functions that help us do things we can’t do with R as it comes out of the box.
+<br>
+You can install them by copy/pasting the following code into your R script (top-left pane), and running in the terminal (low-left pane) by clicking “Run” <code>(Mac: Cmd + Return, Windows: Ctrl + Enter)</code>.</p>
 <pre class="r"><code># Let&#39;s do this in two steps.
 # First, create a vector of the packages we&#39;ll need for this tutorial
 packages &lt;- c(&#39;tidyverse&#39;, &#39;janitor&#39;, &#39;corrplot&#39;, &#39;ggthemes&#39;, &#39;DT&#39;)</code></pre>
@@ -150,13 +152,39 @@ library(DT)</code></pre>
 <pre class="r"><code># Or we can do it the fancy way. Learning the `apply` set of 
 # functions will save you a lot of time in R
 lapply(X = packages, FUN = require, character.only = TRUE)</code></pre>
-<p>When we created a new project, we created a directory to store all files associated with the project. Let’s go ahead and use the <code>getwd()</code> function to check our working directory.</p>
+<p>You may get some warning messages, and if you run into trouble, the only packages we <strong>really</strong> need for this tutorial are <code>tidyverse</code> and <code>janitor</code>, so get rid of headaches if necessary.</p>
+<p>When we created a new project, we created a directory to store all files associated with the project. Let’s go ahead and use the <code>getwd()</code> function to check where that working directory is on our machine.</p>
 <pre class="r"><code># Check our current working directory
 getwd()</code></pre>
-<pre><code>## [1] &quot;/Users/mhutchinson/Google Drive/Git/online-courses-template/content/tutorial/launch_monitor&quot;</code></pre>
-<p>Yours will look different than my own, but the important thing to realize is that this location is where R will look for any data you’re looking to import. It’s also where it will write anything we export.</p>
-<p>Now, let’s use the <strong>dir.create()</strong> function to create a subfolder where we’ll store our Foresight report data.</p>
-<!-- ```{r, echo=FALSE,out.width="49%",  -->
-<!-- out.height="20%",fig.cap="caption",fig.show='hold',fig.align='center'} -->
-<!-- knitr::include_graphics(c("path/to/img1","path/to/img1")) -->
+<pre><code>## [1] &quot;/Users/yourname/project_directory&quot;</code></pre>
+<p>Yours will likely look different, but the important thing to realize is that this location is where R will look for any data you’re looking to import. It’s also where it will write anything we export.</p>
+<p>Now, let’s use the <code>dir.create()</code> function to create a subfolder where we’ll store our Foresight report data.</p>
+<pre class="r"><code># Create a new folder within our working directory called &quot;Data&quot;
+dir.create(&quot;Data&quot;)</code></pre>
+<style>
+div.blue { background-color:##FF9800; border-radius: 5px; padding: 20px;}
+</style>
+<div id="a-note-on-functions" class="section level3 blue">
+<h3>A Note on Functions</h3>
+<p>If you ever have questions about the specific functions and the arguments they take, you can add a question mark before the function name and run it in your console to get the documentation. For instance, running <code>?read_csv()</code> will tell us about that function.</p>
+</div>
+<p><br></p>
+<p><strong>Take your launch monitor data file and save it into the folder you just created.</strong> For your first run, I’d suggest just downloading the <strong><a href="https://www.dropbox.com/s/5w6kbrn97k9myk8/Foresight_Report_Numeric.csv?dl=0">sample data</a></strong> I’ve provided so that if you run into trouble with running any of the following code, we can be sure it’s not a problem with your export.</p>
+<p>We’re now going to read that dataset into R. Steps explained within the #commentary of the code.</p>
+<pre class="r"><code># First, let&#39;s practice creating variables by making one for the 
+# path from the working directory to the data we just stored
+file_name &lt;- &quot;Data/Foresight_Report_Numeric.csv&quot;
+
+# Next, we&#39;ll make use of the read_csv() function to pull in our dataset. 
+# You can see here that the read_csv() function is accepting the file_name
+# object we just created.
+
+# The first line of the Foresight report contains the name of the golfer
+# and datetime of the launch monitor session.
+report_details &lt;- read_csv(file = file_name, col_names = FALSE, trim_ws = TRUE, n_max = 1)</code></pre>
+<p>Extract some metadata about the session that we’ll use latter</p>
+<pre class="r"><code># Some regex to extract the username and get datetime values
+# We&#39;ll add these as columns back into our dataset later
+username &lt;- str_extract(report_details$X1, &quot;(?&lt;=: ).*(?= -)&quot;)
+datetime &lt;- as.POSIXct(str_extract(report_details$X1, &quot;(?&lt;= - ).*&quot;), format = &#39;%m/%e/%Y %I:%M %p&#39;, tz=Sys.timezone())</code></pre>
 </div>

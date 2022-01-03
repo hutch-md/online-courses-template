@@ -138,10 +138,12 @@ div.blue { background-color:#FF9800; border-radius: 5px; padding: 20px;}
 ### A Note to Beginners
 If you've never written any code before, that's totally fine! A lot of the following will be foreign to you, but you *should* be able to just copy/paste these code chunks into your R-script (the top left pane of your R-Studio screen) and run it line by line to produce the same results. If you get errors, try unblocking yourself by Googling the errors or looking for solutions on a site like [Stack Overflow](https://stackoverflow.com/). 
 
-I also highly recommend taking an [Intro to R](https://www.datacamp.com/courses/free-introduction-to-r) course like this one offered by Data Camp.
+I also highly recommend taking an "Intro to R" course like  [this one offered by Data Camp](https://www.datacamp.com/courses/free-introduction-to-r).
 
 </div><br>
-Let's start by loading the packages that are going to help with the manipulation and visualization of our data. You can think of packages like libraries of specialized functions that help us do things we can't do with R as it comes out of the box. You can install them by running the following code.
+Let's start by loading the packages that are going to help with the manipulation and visualization of our data. You can think of packages like libraries of specialized functions that help us do things we can't do with R as it comes out of the box.
+<br>
+You can install them by copy/pasting the following code into your R script (top-left pane), and running in the terminal (low-left pane) by clicking "Run" `(Mac: Cmd + Return, Windows: Ctrl + Enter)`.
 
 
 ```{r}
@@ -174,21 +176,70 @@ library(DT)
 lapply(X = packages, FUN = require, character.only = TRUE)
 ```
 
-When we created a new project, we created a directory to store all files associated with the project. Let's go ahead and use the `getwd()` function to check our working directory. 
+You may get some warning messages, and if you run into trouble, the only packages we **really** need for this tutorial are `tidyverse` and `janitor`, so get rid of headaches if necessary.
 
-```{r}
+When we created a new project, we created a directory to store all files associated with the project. Let's go ahead and use the `getwd()` function to check where that working directory is on our machine. 
+
+```{r eval = FALSE}
 # Check our current working directory
 getwd()
 ```
 
-Yours will look different than my own, but the important thing to realize is that this location is where R will look for any data you're looking to import. It's also where it will write anything we export.
+```{r echo = FALSE}
+print('/Users/yourname/project_directory')
+```
 
-Now, let's use the **dir.create()** function to create a subfolder where we'll store our Foresight report data.
+Yours will likely look different, but the important thing to realize is that this location is where R will look for any data you're looking to import. It's also where it will write anything we export.
+
+Now, let's use the `dir.create()` function to create a subfolder where we'll store our Foresight report data.
+
+```{r eval = FALSE}
+# Create a new folder within our working directory called "Data"
+dir.create("Data")
+```
+<style>
+div.blue { background-color:##FF9800; border-radius: 5px; padding: 20px;}
+</style>
+<div class = "blue">
+
+### A Note on Functions
+If you ever have questions about the specific functions and the arguments they take, you can add a question mark before the function name and run it in your console to get the documentation. For instance, running `?read_csv()` will tell us about that function.
+
+</div><br>
+
+**Take your launch monitor data file and save it into the folder you just created.** For your first run, I'd suggest just downloading the **[sample data](https://www.dropbox.com/s/5w6kbrn97k9myk8/Foresight_Report_Numeric.csv?dl=0)** I've provided so that if you run into trouble with running any of the following code, we can be sure it's not a problem with your export.
+
+We're now going to read that dataset into R. Steps explained within the #commentary of the code. 
 
 
-<!-- ```{r, echo=FALSE,out.width="49%",  -->
-<!-- out.height="20%",fig.cap="caption",fig.show='hold',fig.align='center'} -->
-<!-- knitr::include_graphics(c("path/to/img1","path/to/img1")) -->
+```{r message = FALSE}
+# First, let's practice creating variables by making one for the 
+# path from the working directory to the data we just stored
+file_name <- "Data/Foresight_Report_Numeric.csv"
+
+# Next, we'll make use of the read_csv() function to pull in our dataset. 
+# You can see here that the read_csv() function is accepting the file_name
+# object we just created.
+
+# The first line of the Foresight report contains the name of the golfer
+# and datetime of the launch monitor session.
+report_details <- read_csv(file = file_name, col_names = FALSE, trim_ws = TRUE, n_max = 1)
+
+
+```
+
+Extract some metadata about the session that we'll use latter
+```{r message = FALSE}
+# Some regex to extract the username and get datetime values
+# We'll add these as columns back into our dataset later
+username <- str_extract(report_details$X1, "(?<=: ).*(?= -)")
+datetime <- as.POSIXct(str_extract(report_details$X1, "(?<= - ).*"), format = '%m/%e/%Y %I:%M %p', tz=Sys.timezone())
+```
+
+
+
+
+
 
 
 
